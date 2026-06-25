@@ -18,6 +18,16 @@ The system uses one Python codebase and one container image with three runtime c
 
 Future AWS deployment uses ECS Fargate, SQS, DynamoDB, SNS, EventBridge, ALB, ECR, IAM, and CloudWatch. Current local mode uses in-memory repositories and queue implementations.
 
+Future CI/CD path:
+
+```text
+Pull Request -> Ruff/mypy/pytest -> Docker build -> Trivy -> Terraform validate
+
+Manual Dispatch -> aws-dev approval -> GitHub OIDC -> ECR push -> ECS update
+```
+
+The deployment path is prepared but disabled by default. It requires explicit workflow input and approval variables before any AWS step can run.
+
 ## Features
 
 - monitor CRUD API
@@ -160,7 +170,8 @@ Completed locally:
 - Phase 2: scheduler, worker, queue abstraction, HTTP checks, alerts, tests
 - Phase 3: Dockerfile, Docker Compose, Makefile, lint/typecheck, PR CI workflow
 - Phase 4: Terraform infrastructure files and local formatting/init validation attempt
+- Phase 5: disabled/manual GitHub deployment and Terraform workflow files
 
 Next:
 
-- Phase 5: disabled/manual GitHub OIDC deployment workflow files and observability configuration only
+- Phase 6: failure scenarios, screenshot placeholders, final documentation, and final local validation

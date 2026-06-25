@@ -1,6 +1,6 @@
 # Observability
 
-Phase 4 prepares CloudWatch alarms and a dashboard, but does not create them.
+Phase 4 prepares CloudWatch alarms and a dashboard, but does not create them. Phase 5 prepares the future deployment workflow that would publish the image and update ECS services after explicit approval.
 
 Prepared alarms:
 
@@ -18,4 +18,3 @@ Prepared dashboard:
 - ALB request count, 5xx, response time
 - ECS CPU and memory
 - SQS queue depth, oldest message age, DLQ count
-

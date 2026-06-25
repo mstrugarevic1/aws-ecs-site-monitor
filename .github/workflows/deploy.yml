@@ -1,0 +1,99 @@
+name: Future AWS Deployment
+
+# Prepared for Phase 5 only.
+# AWS credentials are not configured yet.
+# GitHub OIDC trust is not configured yet.
+# Do not run this workflow until AWS deployment is explicitly approved.
+# The deploy job also requires repository/environment variable AWS_DEPLOYMENT_APPROVED=true.
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployment_enabled:
+        description: "Explicitly enable AWS deployment"
+        required: true
+        type: boolean
+        default: false
+      image_uri:
+        description: "Immutable ECR image URI tagged with a Git SHA"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aws-ecs-internal-service-monitor-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to AWS ECS
+    if: ${{ inputs.deployment_enabled == true && vars.AWS_DEPLOYMENT_APPROVED == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: aws-dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Refuse placeholder image URI
+        run: |
+          test "${{ inputs.image_uri }}" != "latest"
+          test "${{ inputs.image_uri }}" != ""
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Test
+        run: pytest
+
+      - name: Build image locally
+        run: docker build -t aws-ecs-internal-service-monitor:${{ github.sha }} .
+
+      - name: Trivy container scan
+        uses: aquasecurity/trivy-action@0.30.0
+        with:
+          image-ref: aws-ecs-internal-service-monitor:${{ github.sha }}
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push immutable image
+        run: |
+          docker tag aws-ecs-internal-service-monitor:${{ github.sha }} "${{ inputs.image_uri }}"
+          docker push "${{ inputs.image_uri }}"
+
+      - name: Register and update ECS services
+        run: |
+          echo "Future step: render task definitions, register revisions, update API and worker services."
+          echo "Future step: update scheduler task definition reference."
+          exit 1
+
+      - name: Wait for ECS stability
+        if: ${{ false }}
+        run: echo "Future step disabled until first AWS deployment is approved."
+
+      - name: Verify health endpoint
+        if: ${{ false }}
+        run: echo "Future step disabled until first AWS deployment is approved."
+
+      - name: Deployment summary
+        if: ${{ false }}
+        run: echo "Future deployment summary disabled."

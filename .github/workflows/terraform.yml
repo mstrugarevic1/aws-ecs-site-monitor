@@ -1,0 +1,104 @@
+name: Terraform
+
+# Phase 5 keeps AWS-backed Terraform actions disabled.
+# Plan/apply/destroy require explicit workflow inputs and AWS_TERRAFORM_APPROVED=true.
+
+on:
+  pull_request:
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+    inputs:
+      aws_plan_enabled:
+        description: "Enable AWS-backed terraform plan"
+        required: true
+        type: boolean
+        default: false
+      apply_enabled:
+        description: "Enable terraform apply"
+        required: true
+        type: boolean
+        default: false
+      destroy_enabled:
+        description: "Enable terraform destroy"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: read
+
+concurrency:
+  group: aws-ecs-internal-service-monitor-terraform
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Local Terraform validation
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.7"
+
+      - name: Terraform fmt
+        run: terraform -chdir=terraform/environments/dev fmt -check -recursive
+
+      - name: Terraform init without backend
+        run: terraform -chdir=terraform/environments/dev init -backend=false
+
+      - name: Terraform validate
+        run: terraform -chdir=terraform/environments/dev validate
+
+  plan:
+    name: Future AWS Terraform plan
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.aws_plan_enabled == true && vars.AWS_TERRAFORM_APPROVED == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: aws-dev
+    needs: validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Refuse to run until remote state and OIDC are approved
+        run: |
+          echo "AWS Terraform plan is prepared for future use only."
+          echo "Remote state and OIDC trust are not configured yet."
+          exit 1
+
+  apply:
+    name: Future AWS Terraform apply
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.apply_enabled == true && vars.AWS_TERRAFORM_APPROVED == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: aws-dev
+    needs: validate
+    steps:
+      - name: Refuse apply until explicitly approved later
+        run: |
+          echo "terraform apply is intentionally disabled in Phase 5."
+          exit 1
+
+  destroy:
+    name: Future AWS Terraform destroy
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.destroy_enabled == true && vars.AWS_TERRAFORM_APPROVED == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: aws-dev
+    needs: validate
+    steps:
+      - name: Refuse destroy until explicitly approved later
+        run: |
+          echo "terraform destroy is intentionally disabled in Phase 5."
+          exit 1
