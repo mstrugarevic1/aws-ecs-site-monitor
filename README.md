@@ -1,6 +1,6 @@
 # aws-ecs-internal-service-monitor
 
-[![CI](https://github.com/OWNER/REPO/actions/workflows/pr.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/pr.yml)
+[![CI](https://github.com/mstrugarevic1/aws-ecs-internal-service-monitor/actions/workflows/pr.yml/badge.svg)](https://github.com/mstrugarevic1/aws-ecs-internal-service-monitor/actions/workflows/pr.yml)
 
 Production-oriented learning project demonstrating common AWS ECS operational patterns.
 
@@ -164,4 +164,3 @@ Completed locally:
 Next:
 
 - Phase 5: disabled/manual GitHub OIDC deployment workflow files and observability configuration only
-
