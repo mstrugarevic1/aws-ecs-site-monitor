@@ -162,6 +162,19 @@ HTTP is a lab limitation until a domain and ACM certificate are provided.
 
 The future AWS design avoids NAT Gateway, RDS, ElastiCache, Route 53 requirements, and paid third-party monitoring. Expected cost drivers after deployment approval are ALB, ECS Fargate tasks, CloudWatch logs/alarms/dashboard, DynamoDB, SQS, SNS, and ECR storage.
 
+## Docs
+
+- [Architecture](docs/architecture.md)
+- [Deployment](docs/deployment.md)
+- [Design Decisions](docs/design-decisions.md)
+- [Failure Scenarios](docs/failure-scenarios.md)
+- [Limitations](docs/limitations.md)
+- [Observability](docs/observability.md)
+- [Security Considerations](docs/security-considerations.md)
+- [Sample API Output](docs/sample-api-output.md)
+- [Screenshots](docs/screenshots.md)
+- [Release Notes](releases/v0.1.0.md)
+
 ## Current Status
 
 Completed locally:
@@ -171,7 +184,8 @@ Completed locally:
 - Phase 3: Dockerfile, Docker Compose, Makefile, lint/typecheck, PR CI workflow
 - Phase 4: Terraform infrastructure files and local formatting/init validation attempt
 - Phase 5: disabled/manual GitHub deployment and Terraform workflow files
+- Phase 6: failure scenarios, screenshot placeholders, final documentation, and final local validation
 
 Next:
 
-- Phase 6: failure scenarios, screenshot placeholders, final documentation, and final local validation
+- AWS deployment only after explicit approval: GitHub OIDC trust, remote state, first ECS push and rollout
