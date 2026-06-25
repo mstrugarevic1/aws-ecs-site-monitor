@@ -1,0 +1,8 @@
+# Copy locally after AWS deployment is explicitly approved.
+# Do not commit real account IDs, email addresses, credentials, or personal values.
+
+aws_region         = "us-east-1"
+name_prefix        = "aws-ecs-internal-service-monitor-dev"
+image_uri          = "set-after-ecr-push"
+notification_email = ""
+

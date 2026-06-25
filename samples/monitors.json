@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Example API",
+    "url": "https://example.com/health",
+    "expected_status": 200,
+    "timeout_seconds": 5,
+    "failure_threshold": 3,
+    "enabled": true
+  }
+]
+

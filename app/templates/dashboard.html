@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Service Monitor</title>
+    <style>
+      body { margin: 0; font-family: system-ui, sans-serif; color: #1f2933; background: #f5f7fa; }
+      main { max-width: 1040px; margin: 0 auto; padding: 32px 20px; }
+      h1 { margin: 0 0 20px; font-size: 28px; }
+      table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #d9e2ec; }
+      th, td { padding: 12px; border-bottom: 1px solid #d9e2ec; text-align: left; font-size: 14px; }
+      th { background: #eef2f7; font-weight: 700; }
+      .empty { padding: 18px; background: white; border: 1px solid #d9e2ec; }
+      .status { font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Internal Service Monitor</h1>
+      {% if monitors %}
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>URL</th>
+              <th>Expected</th>
+              <th>Status</th>
+              <th>Failures</th>
+              <th>Enabled</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for monitor in monitors %}
+              <tr>
+                <td>{{ monitor.name }}</td>
+                <td>{{ monitor.url }}</td>
+                <td>{{ monitor.expected_status }}</td>
+                <td class="status">{{ monitor.status }}</td>
+                <td>{{ monitor.consecutive_failures }}</td>
+                <td>{{ monitor.enabled }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">No monitors configured.</div>
+      {% endif %}
+    </main>
+  </body>
+</html>
+

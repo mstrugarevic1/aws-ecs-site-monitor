@@ -1,0 +1,27 @@
+services:
+  api:
+    build: .
+    image: aws-ecs-internal-service-monitor:local
+    command: ["python", "-m", "app.api.main"]
+    environment:
+      ALLOW_PRIVATE_TARGETS: "false"
+    ports:
+      - "8000:8000"
+
+  scheduler:
+    image: aws-ecs-internal-service-monitor:local
+    command: ["python", "-m", "app.scheduler.main"]
+    environment:
+      ALLOW_PRIVATE_TARGETS: "false"
+    healthcheck:
+      disable: true
+    profiles: ["jobs"]
+
+  worker:
+    image: aws-ecs-internal-service-monitor:local
+    command: ["python", "-m", "app.worker.main"]
+    environment:
+      ALLOW_PRIVATE_TARGETS: "false"
+    healthcheck:
+      disable: true
+    profiles: ["jobs"]

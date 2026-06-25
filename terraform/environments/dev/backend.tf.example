@@ -1,0 +1,12 @@
+# Future remote state example. Do not rename this to backend.tf until AWS deployment is explicitly approved.
+#
+# terraform {
+#   backend "s3" {
+#     bucket         = "replace-after-approval"
+#     key            = "aws-ecs-internal-service-monitor/dev/terraform.tfstate"
+#     region         = "us-east-1"
+#     dynamodb_table = "replace-after-approval"
+#     encrypt        = true
+#   }
+# }
+
