@@ -10,6 +10,8 @@ It runs from one Docker image in three roles:
 - Scheduler: queues checks for enabled monitors
 - Worker: runs checks, stores results, and publishes alerts
 
+![AWS ECS Internal Service Monitor Architecture](docs/images/aws-ecs-internal-service-monitor-architecture.png)
+
 ## Current Status
 
 Local mode works. AWS runtime adapters are implemented, but no AWS environment has been deployed from this repo yet.
