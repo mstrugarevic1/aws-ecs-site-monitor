@@ -98,7 +98,7 @@ async def request_manual_check(monitor_id: str, repository: RepositoryDep, queue
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="monitor not found")
     job_id = str(uuid4())
     await queue.send_check_job(CheckJob(job_id=job_id, monitor_id=monitor_id))
-    return ManualCheckResponse(job_id=job_id, monitor_id=monitor_id, note="Check job queued locally.")
+    return ManualCheckResponse(job_id=job_id, monitor_id=monitor_id, note="Check job queued.")
 
 
 @router.get("/api/v1/monitors/{monitor_id}/results")

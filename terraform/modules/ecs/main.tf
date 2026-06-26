@@ -147,6 +147,7 @@ data "aws_iam_policy_document" "worker" {
       "sqs:DeleteMessage",
       "sqs:ReceiveMessage",
       "sqs:GetQueueAttributes",
+      "sqs:ChangeMessageVisibility",
     ]
     resources = [var.queue_arn]
   }
@@ -193,6 +194,9 @@ resource "aws_ecs_task_definition" "api" {
     }]
     environment = [
       { name = "QUEUE_URL", value = var.queue_url },
+      { name = "MONITORS_TABLE", value = var.monitors_table_name },
+      { name = "CHECK_RESULTS_TABLE", value = var.check_results_table_name },
+      { name = "ALERTS_TOPIC_ARN", value = var.alerts_topic_arn },
       { name = "AWS_REGION", value = var.aws_region }
     ]
     logConfiguration = {
@@ -222,6 +226,9 @@ resource "aws_ecs_task_definition" "worker" {
     command   = ["python", "-m", "app.worker.main"]
     environment = [
       { name = "QUEUE_URL", value = var.queue_url },
+      { name = "MONITORS_TABLE", value = var.monitors_table_name },
+      { name = "CHECK_RESULTS_TABLE", value = var.check_results_table_name },
+      { name = "ALERTS_TOPIC_ARN", value = var.alerts_topic_arn },
       { name = "AWS_REGION", value = var.aws_region }
     ]
     logConfiguration = {
@@ -251,6 +258,9 @@ resource "aws_ecs_task_definition" "scheduler" {
     command   = ["python", "-m", "app.scheduler.main"]
     environment = [
       { name = "QUEUE_URL", value = var.queue_url },
+      { name = "MONITORS_TABLE", value = var.monitors_table_name },
+      { name = "CHECK_RESULTS_TABLE", value = var.check_results_table_name },
+      { name = "ALERTS_TOPIC_ARN", value = var.alerts_topic_arn },
       { name = "AWS_REGION", value = var.aws_region }
     ]
     logConfiguration = {
@@ -371,4 +381,3 @@ resource "aws_cloudwatch_event_target" "scheduler" {
     }
   }
 }
-

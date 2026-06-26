@@ -39,7 +39,9 @@ module "ecs" {
   worker_security_group_id = module.networking.worker_security_group_id
   vpc_id                   = module.networking.vpc_id
   monitors_table_arn       = module.database.monitors_table_arn
+  monitors_table_name      = module.database.monitors_table_name
   check_results_table_arn  = module.database.check_results_table_arn
+  check_results_table_name = module.database.check_results_table_name
   queue_arn                = module.messaging.queue_arn
   queue_url                = module.messaging.queue_url
   alerts_topic_arn         = module.messaging.alerts_topic_arn
@@ -59,4 +61,3 @@ module "observability" {
   queue_name              = module.messaging.queue_name
   dlq_name                = module.messaging.dlq_name
 }
-

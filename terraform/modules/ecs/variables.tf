@@ -34,7 +34,15 @@ variable "monitors_table_arn" {
   type = string
 }
 
+variable "monitors_table_name" {
+  type = string
+}
+
 variable "check_results_table_arn" {
+  type = string
+}
+
+variable "check_results_table_name" {
   type = string
 }
 
@@ -64,4 +72,3 @@ variable "log_retention_days" {
   type    = number
   default = 7
 }
-
