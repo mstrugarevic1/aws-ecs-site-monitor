@@ -1,1 +1,1 @@
-"""Scheduler package placeholder for Phase 2."""
+"""Scheduler runtime package."""

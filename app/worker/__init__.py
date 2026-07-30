@@ -1,1 +1,1 @@
-"""Worker package placeholder for Phase 2."""
+"""Worker runtime package."""

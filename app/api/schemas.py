@@ -47,4 +47,4 @@ class ManualCheckResponse(BaseModel):
     job_id: str
     monitor_id: str
     status: str = "accepted"
-    note: str = "Local queue is added in Phase 2; no check was executed."
+    note: str = "Check job queued."
