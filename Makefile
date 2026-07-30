@@ -13,10 +13,10 @@ lint:
 	$(BIN)/ruff check .
 
 typecheck:
-	$(BIN)/mypy app tests
+	$(BIN)/python -m mypy app tests
 
 test:
-	$(BIN)/pytest
+	$(BIN)/python -m pytest
 
 run-api:
 	$(BIN)/uvicorn app.api.main:app --reload
