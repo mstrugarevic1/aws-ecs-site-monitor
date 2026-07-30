@@ -1,20 +1,16 @@
 # Observability
 
-Phase 4 prepares CloudWatch alarms and a dashboard, but does not create them. Phase 5 prepares the future deployment workflow that would publish the image and update ECS services after explicit approval.
+Terraform defines CloudWatch log groups for the API, scheduler, and worker containers.
 
-Prepared alarms:
+Prepared CloudWatch alarms cover:
 
-- unhealthy ALB targets
-- API running task count below desired count
-- worker running task count below desired count
-- SQS oldest message age
-- DLQ visible messages
-- ECS CPU usage
-- ECS memory usage
-- ALB 5xx errors
+- unhealthy ALB targets;
+- API and worker running task counts;
+- SQS oldest message age;
+- DLQ visible messages;
+- ECS CPU and memory usage;
+- ALB 5xx errors.
 
-Prepared dashboard:
+The prepared dashboard includes ALB request/error/latency metrics, ECS CPU and memory metrics, and SQS queue depth/age/DLQ metrics.
 
-- ALB request count, 5xx, response time
-- ECS CPU and memory
-- SQS queue depth, oldest message age, DLQ count
+These resources are defined in Terraform but have not been deployed from this repository.

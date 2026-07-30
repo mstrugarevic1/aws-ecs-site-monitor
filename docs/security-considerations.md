@@ -1,17 +1,19 @@
 # Security Considerations
 
-Phase 4 creates Terraform files only.
+Implemented or defined controls:
 
-Prepared controls:
+- local mode does not require AWS credentials;
+- separate ECS task roles are defined for API, scheduler, and worker;
+- API ingress is intended to come through the ALB security group;
+- scheduler and worker security groups have no inbound application traffic;
+- DynamoDB, SQS, SNS, and CloudWatch use AWS-managed encryption defaults in the prepared Terraform;
+- no static AWS credentials are stored in the repository.
 
-- separate ECS task roles for API, scheduler, and worker
-- GitHub OIDC planned for later, no static AWS keys
-- ECR scan on push
-- DynamoDB, SQS, SNS encryption using AWS-managed options
-- API tasks accept inbound traffic only from the ALB security group
-- worker and scheduler tasks have no inbound rules
+Current limitations:
 
-IAM wildcard note: no broad resource wildcard is used in the prepared task role policies. AWS-managed task execution policy is attached for ECS image pull and log delivery.
+- no authentication or authorization is implemented for the API;
+- HTTPS, domain, and ACM certificate are not configured;
+- full SSRF protection is not implemented;
+- AWS deployment and IAM behavior have not been proven by applying the Terraform.
 
-HTTP is a lab limitation until a domain and ACM certificate are provided.
-
+Treat the repository as a demo architecture, not a hardened production service.

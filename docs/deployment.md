@@ -1,64 +1,32 @@
 # Deployment
 
-Phase 5 prepares deployment workflow files. Do not deploy yet.
+Terraform defines the target AWS environment, but this repository has not completed an AWS deployment.
 
-Allowed local validation:
+Local validation:
 
 ```bash
 make terraform-format
 make terraform-validate
 ```
 
-Not allowed until explicitly approved:
+`make terraform-validate` runs `terraform init -backend=false` before validation, so it needs access to `registry.terraform.io` to download providers. It does not require AWS credentials.
 
-- `terraform plan`
-- `terraform apply`
-- `terraform destroy`
-- AWS CLI resource changes
-- ECR image push
-- ECS service updates
-- remote Terraform state
+## Current State
 
-Future deployment will require GitHub OIDC, an ECR image tagged with a Git SHA, and protected approval before any AWS command runs.
+- Terraform modules define networking, ECR, DynamoDB, SQS/SNS, ECS/Fargate, ALB, EventBridge scheduling, IAM, and CloudWatch resources.
+- Terraform uses local validation settings in this repository.
+- Remote Terraform state is not configured.
+- GitHub OIDC trust for AWS deployment is not configured.
+- No `terraform apply` has been run from this repository.
 
-Prepared CI/CD flow:
+## Before Deployment
 
-```text
-Developer
-  |
-  +-- pull request ----------------------+
-  |                                      |
-  |                                      v
-  |                              GitHub Actions PR checks
-  |                              - Ruff format/lint
-  |                              - mypy
-  |                              - pytest
-  |                              - Docker build
-  |                              - Trivy scans
-  |                              - Terraform fmt/init/validate
-  |
-  +-- manual dispatch only --------------+
-                                         |
-                                         v
-                              Future protected aws-dev deployment
-                              - requires deployment_enabled=true
-                              - requires AWS_DEPLOYMENT_APPROVED=true
-                              - requires GitHub OIDC trust
-                              - refuses placeholder image tags
-```
+Before applying this infrastructure, configure:
 
-Prepared Terraform workflow:
+- remote Terraform state and locking;
+- AWS account and region values;
+- immutable image URI from ECR;
+- notification email or another SNS subscriber;
+- GitHub OIDC role trust, if deployment is automated later.
 
-```text
-Pull request touching terraform/
-  |
-  v
-fmt -> init -backend=false -> validate
-
-Manual future AWS plan/apply/destroy
-  |
-  v
-requires explicit boolean input + aws-dev environment + AWS_TERRAFORM_APPROVED=true
-```
-
-The deployment workflow is intentionally manual-only and has no push trigger.
+Do not use the default local image value for a real ECS deployment.

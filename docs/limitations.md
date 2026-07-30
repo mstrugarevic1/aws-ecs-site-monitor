@@ -1,8 +1,10 @@
 # Limitations
 
-- This is not production-ready.
-- Full SSRF protection is intentionally not implemented yet.
-- Local development uses in-memory repositories and queue implementations, so the API, scheduler, and worker do not share state across separate processes until the AWS-backed phase.
-- HTTPS is not configured in the current implementation because no domain or ACM certificate is provided.
-- Terraform is validated locally only; AWS deployment is intentionally disabled until explicitly approved.
-
+- Not production-ready.
+- AWS deployment has not been proven from this repository.
+- Local API, scheduler, and worker processes do not share in-memory state.
+- AWS-backed runtime is required for shared queue and repository state across roles.
+- No authentication or authorization is implemented.
+- HTTPS, custom domain, and ACM certificate are not configured.
+- Full SSRF protection is not implemented.
+- No multi-region or high-availability claims are made.

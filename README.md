@@ -1,106 +1,64 @@
-# aws-ecs-internal-service-monitor
+# AWS ECS Internal Service Monitor
 
-[![CI](https://github.com/mstrugarevic1/aws-ecs-internal-service-monitor/actions/workflows/pr.yml/badge.svg)](https://github.com/mstrugarevic1/aws-ecs-internal-service-monitor/actions/workflows/pr.yml)
+Internal HTTP service monitoring system designed for AWS ECS/Fargate.
 
-Small HTTP monitoring app designed for AWS ECS/Fargate.
+Users define HTTP monitors through a FastAPI API. A scheduler enqueues checks for enabled monitors. Workers consume queued checks, call target endpoints, store results, and emit alerts when failure thresholds are reached. The same Docker image can run as the API, scheduler, or worker depending on the command and runtime configuration.
 
-It runs from one Docker image in three roles:
+## Architecture
 
-- API: dashboard, CRUD API, health/readiness endpoints
-- Scheduler: queues checks for enabled monitors
-- Worker: runs checks, stores results, and publishes alerts
+The project demonstrates a small ECS service split into three roles:
+
+- API: dashboard, monitor CRUD, readiness, manual check enqueueing.
+- Scheduler: periodically scans enabled monitors and sends check jobs.
+- Worker: consumes jobs, runs HTTP checks, writes results, updates monitor state, and publishes alert or recovery notifications.
+
+AWS-backed runtime targets:
+
+- ALB routes HTTP traffic to the API service.
+- EventBridge runs the scheduler task on a schedule.
+- SQS decouples check production from worker execution.
+- DynamoDB stores monitor definitions and check results.
+- SNS receives alert and recovery notifications.
+- CloudWatch receives logs, alarms, and dashboard metrics.
+- Terraform defines the AWS infrastructure.
+- GitHub Actions runs validation.
 
 ![AWS ECS Internal Service Monitor Architecture](docs/images/aws-ecs-internal-service-monitor-architecture.png)
 
+See [Architecture](docs/architecture.md) for the request and check flow.
+
+## What This Demonstrates
+
+- ECS/Fargate service decomposition with one reusable image.
+- Queue-based worker processing with SQS.
+- DynamoDB-backed state for monitors and check history.
+- SNS alerting on threshold crossings and recovery.
+- Runtime separation between local in-memory adapters and AWS adapters.
+- Terraform infrastructure definition for the target AWS shape.
+- CI validation for Python code and Terraform syntax.
+
 ## Current Status
 
-Local mode works. AWS runtime adapters are implemented, but no AWS environment has been deployed from this repo yet.
+- Local runtime works without AWS credentials.
+- AWS runtime adapters are implemented for DynamoDB, SQS, and SNS.
+- Terraform for the AWS environment is present and intended for deployment.
+- AWS deployment has not been proven from this repository.
 
-- Local mode: in-memory repository, in-memory queue, log notifications
-- AWS mode: DynamoDB, SQS, SNS when AWS env vars are present
-- Terraform: infrastructure is prepared and validates locally
-
-## Run Locally
-
-Requirements:
-
-- Python 3.12+
-- Docker, only for container runs
-- Terraform, only for infrastructure validation
-
-```bash
-make install
-make test
-make run-api
-```
-
-Open `http://127.0.0.1:8000/`.
-
-Run with Docker:
-
-```bash
-make docker-build
-make docker-up
-make docker-down
-```
-
-## API Examples
-
-Create a monitor.
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/monitors \
-  -H 'content-type: application/json' \
-  -d '{"name":"Example API","url":"https://example.com/health","expected_status":200,"timeout_seconds":5,"failure_threshold":3,"enabled":true}'
-```
-
-List monitors.
-
-```bash
-curl http://127.0.0.1:8000/api/v1/monitors
-```
-
-Queue a manual check.
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/monitors/MONITOR_ID/check
-```
-
-## Runtime Modes
-
-Local mode needs no AWS credentials.
-
-In local mode, the API, scheduler, and worker use in-memory adapters per process. Run AWS-backed mode when those roles must share repository and queue state across separate processes.
-
-AWS mode is selected automatically when all of these are set:
-
-```text
-AWS_REGION
-MONITORS_TABLE
-CHECK_RESULTS_TABLE
-QUEUE_URL
-ALERTS_TOPIC_ARN
-```
-
-Before a real AWS deployment, configure remote Terraform state and enable the guarded deploy workflow. See [Deployment](docs/deployment.md).
-
-## Validation
-
-```bash
-make lint
-make typecheck
-make test
-make terraform-format
-make terraform-validate
-```
-
-`make terraform-validate` needs access to `registry.terraform.io` to initialize providers.
-
-## Docs
+## Documentation
 
 - [Architecture](docs/architecture.md)
+- [Local Development](docs/local-development.md)
 - [Deployment](docs/deployment.md)
-- [Security](docs/security-considerations.md)
 - [Observability](docs/observability.md)
+- [Security Considerations](docs/security-considerations.md)
 - [Limitations](docs/limitations.md)
 - [Cost and Cleanup](docs/cost-and-cleanup.md)
+- [Implementation Notes](docs/implementation-notes.md)
+
+## Limitations
+
+- Not production-ready.
+- No authentication is implemented.
+- HTTPS, custom domain, and ACM certificate are not configured.
+- Local API, scheduler, and worker processes do not share in-memory state.
+- AWS-backed runtime is required for shared queue and repository state.

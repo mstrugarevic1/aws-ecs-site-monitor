@@ -1,15 +1,14 @@
-# Cost And Cleanup
+# Cost and Cleanup
 
-This is a portfolio lab design. Terraform is not applied in Phase 4.
+Terraform is structured for a small demo environment, not a production baseline.
 
-Prepared cost-conscious choices:
+Cost-conscious choices in the prepared infrastructure:
 
-- no NAT Gateway
-- no RDS
-- no ElastiCache
-- short CloudWatch log retention
-- one API task and one worker task by default
-- DynamoDB on-demand billing
+- public subnets without a NAT Gateway;
+- DynamoDB on-demand billing;
+- SQS/SNS instead of running a broker;
+- no RDS or ElastiCache;
+- short CloudWatch log retention;
+- one API task and one worker task by default.
 
-Future cleanup, after deployment is approved, will be documented before any destroy command is added or run.
-
+No AWS resources have been created from this repository, so there is no repository-specific cleanup command to run yet. If the Terraform is applied later, cleanup should be handled with the same remote state and approval process used for deployment.
