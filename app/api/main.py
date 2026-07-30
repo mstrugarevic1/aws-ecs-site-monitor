@@ -1,19 +1,24 @@
 import uvicorn
 from fastapi import FastAPI
 
+from app import runtime
 from app.api.routes import router
 from app.common.logging import configure_logging
-from app.repositories.memory import InMemoryMonitorRepository
-from app.services.notifier import LocalLoggingNotifier
-from app.services.queue import InMemoryQueueClient
+from app.repositories.interfaces import MonitorRepository
+from app.services.notifier import NotificationPublisher
+from app.services.queue import QueueClient
 
 
-def create_app() -> FastAPI:
+def create_app(
+    repository: MonitorRepository | None = None,
+    queue: QueueClient | None = None,
+    notifier: NotificationPublisher | None = None,
+) -> FastAPI:
     configure_logging()
     app = FastAPI(title="AWS ECS Internal Service Monitor", version="0.1.0")
-    app.state.repository = InMemoryMonitorRepository()
-    app.state.queue = InMemoryQueueClient()
-    app.state.notifier = LocalLoggingNotifier()
+    app.state.repository = repository if repository is not None else runtime.repository
+    app.state.queue = queue if queue is not None else runtime.queue
+    app.state.notifier = notifier if notifier is not None else runtime.notifier
     app.include_router(router)
     return app
 

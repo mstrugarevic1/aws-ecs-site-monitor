@@ -70,6 +70,8 @@ curl -X POST http://127.0.0.1:8000/api/v1/monitors/MONITOR_ID/check
 
 Local mode needs no AWS credentials.
 
+In local mode, the API, scheduler, and worker use in-memory adapters per process. Run AWS-backed mode when those roles must share repository and queue state across separate processes.
+
 AWS mode is selected automatically when all of these are set:
 
 ```text
