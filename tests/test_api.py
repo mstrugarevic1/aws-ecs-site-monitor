@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.repositories.memory import InMemoryMonitorRepository
+from app.services.http_checker import HttpCheckOutcome
 from app.services.notifier import LocalLoggingNotifier
 from app.services.queue import InMemoryQueueClient
 
@@ -134,6 +135,35 @@ def test_api_crud_manual_check_and_results() -> None:
     deleted = client.delete(f"/api/v1/monitors/{monitor_id}")
     assert deleted.status_code == 204
     assert client.get(f"/api/v1/monitors/{monitor_id}").status_code == 404
+
+
+def test_local_manual_check_updates_monitor_status() -> None:
+    class PassingChecker:
+        async def check(self, url: str, timeout_seconds: int) -> HttpCheckOutcome:
+            return HttpCheckOutcome(http_status=200, latency_ms=12)
+
+    app = reload_api_main().create_app(checker=PassingChecker())
+    client = TestClient(app)
+
+    created = client.post(
+        "/api/v1/monitors",
+        json={
+            "name": "Example API",
+            "url": "https://example.com/health",
+            "expected_status": 200,
+            "timeout_seconds": 5,
+            "failure_threshold": 3,
+            "enabled": True,
+        },
+    ).json()
+
+    check = client.post(f"/api/v1/monitors/{created['monitor_id']}/check")
+
+    assert check.status_code == 202
+    monitor = client.get(f"/api/v1/monitors/{created['monitor_id']}").json()
+    assert monitor["status"] == "UP"
+    assert monitor["latency_ms"] == 12
+    assert len(client.get(f"/api/v1/monitors/{created['monitor_id']}/results").json()) == 1
 
 
 def test_api_rejects_unsafe_url() -> None:

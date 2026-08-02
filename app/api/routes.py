@@ -9,7 +9,10 @@ from app.api.schemas import ManualCheckResponse, MonitorCreate, MonitorUpdate
 from app.common.config import settings
 from app.domain.models import CheckJob, Monitor
 from app.repositories.interfaces import MonitorRepository
-from app.services.queue import QueueClient
+from app.services.http_checker import CheckClient
+from app.services.notifier import NotificationPublisher
+from app.services.queue import InMemoryQueueClient, QueueClient
+from app.services.worker import WorkerService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -23,8 +26,18 @@ def get_queue(request: Request) -> QueueClient:
     return request.app.state.queue
 
 
+def get_notifier(request: Request) -> NotificationPublisher:
+    return request.app.state.notifier
+
+
+def get_checker(request: Request) -> CheckClient:
+    return request.app.state.checker
+
+
 RepositoryDep = Annotated[MonitorRepository, Depends(get_repository)]
 QueueDep = Annotated[QueueClient, Depends(get_queue)]
+NotifierDep = Annotated[NotificationPublisher, Depends(get_notifier)]
+CheckerDep = Annotated[CheckClient, Depends(get_checker)]
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -92,13 +105,23 @@ async def delete_monitor(monitor_id: str, repository: RepositoryDep):
     response_model=ManualCheckResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
-async def request_manual_check(monitor_id: str, repository: RepositoryDep, queue: QueueDep):
+async def request_manual_check(
+    monitor_id: str,
+    repository: RepositoryDep,
+    queue: QueueDep,
+    notifier: NotifierDep,
+    checker: CheckerDep,
+):
     monitor = await repository.get(monitor_id)
     if monitor is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="monitor not found")
     job_id = str(uuid4())
     await queue.send_check_job(CheckJob(job_id=job_id, monitor_id=monitor_id))
-    return ManualCheckResponse(job_id=job_id, monitor_id=monitor_id, note="Check job queued.")
+    note = "Check job queued."
+    if isinstance(queue, InMemoryQueueClient):
+        await WorkerService(repository, queue, checker, notifier).process_next()
+        note = "Check job processed."
+    return ManualCheckResponse(job_id=job_id, monitor_id=monitor_id, note=note)
 
 
 @router.get("/api/v1/monitors/{monitor_id}/results")
