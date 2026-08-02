@@ -91,7 +91,7 @@ def test_health_readiness_version_and_dashboard() -> None:
     assert client.get("/healthz").json() == {"status": "ok"}
     assert client.get("/readyz").json() == {"status": "ready"}
     version = client.get("/version").json()
-    assert version["name"] == "aws-ecs-internal-service-monitor"
+    assert version["name"] == "aws-ecs-site-monitor"
     assert version["version"] == "0.1.0"
 
     dashboard = client.get("/")

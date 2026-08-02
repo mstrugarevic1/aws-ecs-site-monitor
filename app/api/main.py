@@ -15,7 +15,14 @@ def create_app(
     notifier: NotificationPublisher | None = None,
 ) -> FastAPI:
     configure_logging()
-    app = FastAPI(title="AWS ECS Internal Service Monitor", version="0.1.0")
+    app = FastAPI(
+        title="Site Monitor",
+        description=(
+            "Lightweight HTTP endpoint monitoring application for websites, APIs, "
+            "health-check endpoints, and HTTP-accessible services."
+        ),
+        version="0.1.0",
+    )
     app.state.repository = repository if repository is not None else runtime.repository
     app.state.queue = queue if queue is not None else runtime.queue
     app.state.notifier = notifier if notifier is not None else runtime.notifier
