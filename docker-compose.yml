@@ -1,7 +1,7 @@
 services:
   api:
     build: .
-    image: aws-ecs-internal-service-monitor:local
+    image: aws-ecs-site-monitor:local
     command: ["python", "-m", "app.api.main"]
     environment:
       ALLOW_PRIVATE_TARGETS: "false"
@@ -9,7 +9,7 @@ services:
       - "8000:8000"
 
   scheduler:
-    image: aws-ecs-internal-service-monitor:local
+    image: aws-ecs-site-monitor:local
     command: ["python", "-m", "app.scheduler.main"]
     environment:
       ALLOW_PRIVATE_TARGETS: "false"
@@ -18,7 +18,7 @@ services:
     profiles: ["jobs"]
 
   worker:
-    image: aws-ecs-internal-service-monitor:local
+    image: aws-ecs-site-monitor:local
     command: ["python", "-m", "app.worker.main"]
     environment:
       ALLOW_PRIVATE_TARGETS: "false"

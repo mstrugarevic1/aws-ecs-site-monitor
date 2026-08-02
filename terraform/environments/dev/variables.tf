@@ -11,12 +11,12 @@ variable "aws_account_id" {
 
 variable "name_prefix" {
   type    = string
-  default = "aws-ecs-internal-service-monitor-dev"
+  default = "aws-ecs-site-monitor-dev"
 }
 
 variable "image_uri" {
   type        = string
-  default     = "aws-ecs-internal-service-monitor:local"
+  default     = "aws-ecs-site-monitor:local"
   description = "Future immutable ECR image URI tagged with a Git SHA."
 }
 
@@ -45,4 +45,3 @@ variable "result_ttl_days" {
   type    = number
   default = 7
 }
-

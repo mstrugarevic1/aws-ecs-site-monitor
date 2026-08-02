@@ -28,7 +28,7 @@ run-worker:
 	$(BIN)/python -m app.worker.main
 
 docker-build:
-	docker build -t aws-ecs-internal-service-monitor:local .
+	docker build -t aws-ecs-site-monitor:local .
 
 docker-up:
 	docker compose up --build api

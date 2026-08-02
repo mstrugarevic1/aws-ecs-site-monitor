@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "aws-ecs-internal-service-monitor"
+    app_name: str = "aws-ecs-site-monitor"
     app_version: str = "0.1.0"
     allow_private_targets: bool = Field(default=False, alias="ALLOW_PRIVATE_TARGETS")
     aws_region: str | None = Field(default=None, alias="AWS_REGION")

@@ -1,1 +1,1 @@
-"""AWS ECS internal service monitor."""
+"""Site Monitor application package."""
