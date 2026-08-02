@@ -2,8 +2,6 @@
 
 Site Monitor is a lightweight HTTP endpoint monitoring application built with FastAPI. It checks configured websites and HTTP service endpoints, records status codes and response times, stores results, and shows the latest state in a minimal server-rendered dashboard.
 
-Repository identifier: `aws-ecs-site-monitor`.
-
 ## Architecture
 
 The project is one Python/FastAPI codebase packaged into one Docker image with three runtime roles:
@@ -80,21 +78,21 @@ Unsupported per-monitor options: custom HTTP method, custom headers, request bod
 
 FastAPI provides monitor creation, retrieval, update, deletion, manual checks, result retrieval, request validation, generated API docs, and the lightweight dashboard.
 
-Enabled routes include:
-
-- `GET /`
-- `GET /healthz`
-- `GET /readyz`
-- `GET /version`
-- `POST /api/v1/monitors`
-- `GET /api/v1/monitors`
-- `GET /api/v1/monitors/{monitor_id}`
-- `PATCH /api/v1/monitors/{monitor_id}`
-- `DELETE /api/v1/monitors/{monitor_id}`
-- `POST /api/v1/monitors/{monitor_id}/check`
-- `GET /api/v1/monitors/{monitor_id}/results`
-- `GET /docs`
-- `GET /redoc`
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/` | Dashboard |
+| `GET` | `/healthz` | Application health |
+| `GET` | `/readyz` | Repository readiness |
+| `GET` | `/version` | Application version |
+| `POST` | `/api/v1/monitors` | Create a monitor |
+| `GET` | `/api/v1/monitors` | List monitors |
+| `GET` | `/api/v1/monitors/{monitor_id}` | Get one monitor |
+| `PATCH` | `/api/v1/monitors/{monitor_id}` | Update a monitor |
+| `DELETE` | `/api/v1/monitors/{monitor_id}` | Delete a monitor |
+| `POST` | `/api/v1/monitors/{monitor_id}/check` | Request a manual check |
+| `GET` | `/api/v1/monitors/{monitor_id}/results` | List monitor results |
+| `GET` | `/docs` | Swagger UI |
+| `GET` | `/redoc` | ReDoc |
 
 No React, Vue, Angular, or similar frontend app is required.
 
