@@ -1,12 +1,12 @@
 # Architecture
 
-The application is one Python/FastAPI codebase packaged into one Docker image. The image can run in three roles: API, scheduler, or worker.
+Site Monitor is one Python/FastAPI codebase packaged into one Docker image. The image can run in three roles: API, scheduler, or worker.
 
-![AWS ECS Internal Service Monitor Architecture](images/aws-ecs-internal-service-monitor-architecture.png)
+![Site Monitor AWS architecture](images/site-monitor-aws-architecture.png)
 
 ## Runtime Roles
 
-- API service: serves the dashboard and monitor API, reads and writes monitor state, and enqueues manual checks.
+- API service: serves the lightweight dashboard and monitor API, reads and writes monitor state, and enqueues manual checks.
 - Scheduler task: scans enabled monitors and sends check jobs to the queue.
 - Worker service: receives queued jobs, runs HTTP checks, writes result history, updates monitor status, and publishes alert or recovery notifications.
 
@@ -23,10 +23,10 @@ EventBridge -> Scheduler -> SQS -> Worker -> target HTTP endpoint
                                   +-> SNS
 ```
 
-1. A user creates or updates monitors through the API.
+1. A user creates or updates HTTP endpoint monitors through the API.
 2. The API stores monitor definitions and can enqueue a manual check.
 3. EventBridge triggers the scheduler, which enqueues checks for enabled monitors.
-4. Workers consume SQS messages and call the target HTTP endpoint.
+4. Workers consume SQS messages and call the target HTTP endpoint with an HTTP `GET` request.
 5. Workers store check results and update monitor state in DynamoDB.
 6. Workers publish SNS notifications when a monitor crosses its failure threshold or recovers.
 

@@ -1,6 +1,6 @@
 # Local Development
 
-Local mode uses in-memory adapters and does not require AWS credentials.
+Site Monitor local mode uses in-memory adapters and does not require AWS credentials.
 
 Setup:
 
@@ -16,6 +16,8 @@ make run-api
 ```
 
 Open `http://127.0.0.1:8000/`.
+
+The lightweight dashboard is served by FastAPI. Monitor creation is currently done through the API, Swagger UI at `/docs`, or ReDoc at `/redoc`.
 
 Run one scheduler pass or one worker loop entry:
 

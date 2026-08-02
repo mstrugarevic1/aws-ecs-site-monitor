@@ -1,6 +1,6 @@
 # Deployment
 
-Terraform defines the target AWS environment, but this repository has not completed an AWS deployment.
+Terraform defines the target AWS environment for Site Monitor, but this repository has not completed an AWS deployment.
 
 Local validation:
 
@@ -13,7 +13,7 @@ make terraform-validate
 
 ## Current State
 
-- Terraform modules define networking, ECR, DynamoDB, SQS/SNS, ECS/Fargate, ALB, EventBridge scheduling, IAM, and CloudWatch resources.
+- Terraform modules define networking, ECR, DynamoDB, SQS/SNS, ECS/Fargate, ALB, EventBridge scheduling, IAM, and CloudWatch resources for the API, scheduler, and worker roles.
 - Terraform uses local validation settings in this repository.
 - Remote Terraform state is not configured.
 - GitHub OIDC trust for AWS deployment is not configured.

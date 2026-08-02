@@ -97,7 +97,21 @@ def test_health_readiness_version_and_dashboard() -> None:
 
     dashboard = client.get("/")
     assert dashboard.status_code == 200
-    assert "Internal Service Monitor" in dashboard.text
+    assert "Site Monitor" in dashboard.text
+
+    client.post(
+        "/api/v1/monitors",
+        json={
+            "name": "Example API",
+            "url": "https://example.com/health",
+            "expected_status": 200,
+            "timeout_seconds": 5,
+            "failure_threshold": 3,
+            "enabled": True,
+        },
+    )
+    dashboard = client.get("/")
+    assert "Last Checked" in dashboard.text
 
 
 def test_api_crud_manual_check_and_results() -> None:
