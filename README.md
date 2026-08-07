@@ -122,6 +122,18 @@ The Compose API service exposes `http://127.0.0.1:8000/`.
 
 Terraform defines the target AWS environment, but this repository has not completed an AWS deployment.
 
+Create the remote-state and GitHub OIDC prerequisites from a trusted workstation:
+
+```bash
+AWS_PROFILE=my-profile \
+GITHUB_REPOSITORY=owner/aws-ecs-site-monitor \
+./scripts/bootstrap-deployment.sh
+```
+
+The script does not deploy the application. See the [deployment guide](docs/deployment.md) for prerequisites, security scope, and the remaining workflow steps.
+
+Validate Terraform locally:
+
 ```bash
 make terraform-format
 make terraform-validate
