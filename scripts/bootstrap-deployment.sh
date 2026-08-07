@@ -17,6 +17,7 @@ Required:
 Optional:
   AWS_REGION           AWS region (default: us-east-1).
   GITHUB_ENVIRONMENT   Protected deployment environment (default: aws-dev).
+  GITHUB_REVIEWER      Required reviewer (default: authenticated GitHub user).
   NAME_PREFIX          AWS resource prefix (default: aws-ecs-site-monitor-dev).
   TF_STATE_BUCKET      Globally unique state bucket name (default includes account ID).
   TF_STATE_KEY         State object key (default: NAME_PREFIX/terraform.tfstate).
@@ -30,8 +31,8 @@ The script is idempotent. It creates or updates:
   - the GitHub Actions OIDC provider and deployment IAM role;
   - the GitHub environment and its non-secret deployment variables.
 
-It never creates access keys or stores AWS credentials. Configure required reviewers
-for the GitHub environment in the repository settings after it completes.
+It never creates access keys or stores AWS credentials. Self-review is allowed so the
+authenticated user can approve deployments in a single-owner repository.
 EOF
 }
 
@@ -67,6 +68,10 @@ account_id=$(aws "${aws_args[@]}" sts get-caller-identity --query Account --outp
 [[ $account_id =~ ^[0-9]{12}$ ]] || fail "AWS did not return a valid account ID"
 gh auth status >/dev/null
 gh repo view "$GITHUB_REPOSITORY" >/dev/null
+GITHUB_REVIEWER=${GITHUB_REVIEWER:-$(gh api user --jq .login)}
+[[ $GITHUB_REVIEWER =~ ^[A-Za-z0-9-]+$ ]] || fail "GITHUB_REVIEWER is not a valid GitHub username"
+reviewer_id=$(gh api "users/$GITHUB_REVIEWER" --jq .id)
+[[ $reviewer_id =~ ^[0-9]+$ ]] || fail "GitHub did not return a valid reviewer ID"
 
 TF_STATE_BUCKET=${TF_STATE_BUCKET:-"${NAME_PREFIX}-${account_id}-tfstate"}
 TF_STATE_KEY=${TF_STATE_KEY:-"${NAME_PREFIX}/terraform.tfstate"}
@@ -247,16 +252,30 @@ role_arn=$(aws "${aws_args[@]}" iam get-role \
   --query Role.Arn \
   --output text)
 
-gh api --method PUT "repos/$GITHUB_REPOSITORY/environments/$GITHUB_ENVIRONMENT" >/dev/null
+cat >"$tmp_dir/environment.json" <<EOF
+{
+  "wait_timer": 0,
+  "prevent_self_review": false,
+  "reviewers": [{"type": "User", "id": $reviewer_id}]
+}
+EOF
+
+gh api --method PUT \
+  "repos/$GITHUB_REPOSITORY/environments/$GITHUB_ENVIRONMENT" \
+  --input "$tmp_dir/environment.json" >/dev/null
 for variable in AWS_REGION TF_STATE_BUCKET TF_STATE_KEY TF_LOCK_TABLE NAME_PREFIX; do
   gh variable set "$variable" \
     --repo "$GITHUB_REPOSITORY" \
     --env "$GITHUB_ENVIRONMENT" \
     --body "${!variable}"
 done
+gh variable set AWS_ACCOUNT_ID \
+  --repo "$GITHUB_REPOSITORY" \
+  --env "$GITHUB_ENVIRONMENT" \
+  --body "$account_id"
 gh variable set AWS_DEPLOY_ROLE_ARN \
   --repo "$GITHUB_REPOSITORY" \
   --env "$GITHUB_ENVIRONMENT" \
   --body "$role_arn"
 
-echo "Bootstrap complete. Configure required reviewers for the '$GITHUB_ENVIRONMENT' GitHub environment."
+echo "Bootstrap complete. '$GITHUB_REVIEWER' can approve deployments to '$GITHUB_ENVIRONMENT'."

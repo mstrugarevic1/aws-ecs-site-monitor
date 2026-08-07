@@ -12,6 +12,7 @@ def test_bootstrap_script_help() -> None:
 
     assert "AWS_PROFILE" in result.stdout
     assert "GITHUB_REPOSITORY" in result.stdout
+    assert "GITHUB_REVIEWER" in result.stdout
     assert "never creates access keys" in result.stdout
 
 
@@ -33,12 +34,13 @@ exit 0
     aws.chmod(0o755)
 
     gh = bin_dir / "gh"
-    gh.write_text("#!/bin/sh\nexit 0\n")
+    gh.write_text('#!/bin/sh\ncase "$*" in *"users/tester"*) echo 12345 ;; esac\nexit 0\n')
     gh.chmod(0o755)
 
     monkeypatch.setenv("PATH", f"{bin_dir}:/usr/bin:/bin")
     monkeypatch.setenv("AWS_PROFILE", "test-profile")
     monkeypatch.setenv("GITHUB_REPOSITORY", "owner/repository")
+    monkeypatch.setenv("GITHUB_REVIEWER", "tester")
     monkeypatch.setenv("BOOTSTRAP_APPROVED", "true")
 
     result = subprocess.run([SCRIPT], check=True, capture_output=True, text=True)

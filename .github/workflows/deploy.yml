@@ -1,0 +1,130 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: Deploy the current main commit to AWS
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: aws-ecs-site-monitor-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to AWS
+    if: ${{ inputs.confirm_deploy && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    environment: aws-dev
+    env:
+      TF_IN_AUTOMATION: "true"
+      TF_DIR: terraform/environments/dev
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+      TF_STATE_KEY: ${{ vars.TF_STATE_KEY }}
+      TF_LOCK_TABLE: ${{ vars.TF_LOCK_TABLE }}
+      NAME_PREFIX: ${{ vars.NAME_PREFIX }}
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_name_prefix: ${{ vars.NAME_PREFIX }}
+      TF_VAR_notification_email: ${{ vars.NOTIFICATION_EMAIL }}
+
+    steps:
+      - name: Check deployment variables
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_DEPLOY_ROLE_ARN: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+        run: |
+          for variable in AWS_REGION AWS_ACCOUNT_ID AWS_DEPLOY_ROLE_ARN TF_STATE_BUCKET TF_STATE_KEY TF_LOCK_TABLE NAME_PREFIX; do
+            test -n "${!variable}" || { echo "Missing GitHub environment variable: $variable" >&2; exit 1; }
+          done
+
+      - name: Checkout
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: "1.5.7"
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials through OIDC
+        uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          mask-aws-account-id: true
+
+      - name: Initialize and validate Terraform
+        run: |
+          terraform -chdir="$TF_DIR" init -input=false \
+            -backend-config="bucket=$TF_STATE_BUCKET" \
+            -backend-config="key=$TF_STATE_KEY" \
+            -backend-config="region=$AWS_REGION" \
+            -backend-config="dynamodb_table=$TF_LOCK_TABLE" \
+            -backend-config="encrypt=true"
+          terraform -chdir="$TF_DIR" fmt -check -recursive
+          terraform -chdir="$TF_DIR" validate
+
+      - name: Create ECR repository
+        run: terraform -chdir="$TF_DIR" apply -input=false -auto-approve -target=module.ecr
+
+      - name: Resolve image
+        run: |
+          repository_url=$(terraform -chdir="$TF_DIR" output -raw ecr_repository_url)
+          image_uri="$repository_url:$GITHUB_SHA"
+          if aws ecr describe-images --repository-name "$NAME_PREFIX" --image-ids "imageTag=$GITHUB_SHA" >/dev/null 2>&1; then
+            image_exists=true
+          else
+            image_exists=false
+          fi
+          echo "IMAGE_URI=$image_uri" >> "$GITHUB_ENV"
+          echo "IMAGE_EXISTS=$image_exists" >> "$GITHUB_ENV"
+
+      - name: Log in to ECR
+        if: env.IMAGE_EXISTS != 'true'
+        uses: aws-actions/amazon-ecr-login@v2.1.6
+
+      - name: Build and push image
+        if: env.IMAGE_EXISTS != 'true'
+        run: |
+          docker build --platform linux/amd64 --tag "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+
+      - name: Plan infrastructure
+        env:
+          TF_VAR_image_uri: ${{ env.IMAGE_URI }}
+        run: terraform -chdir="$TF_DIR" plan -input=false -out=tfplan
+
+      - name: Apply infrastructure
+        run: terraform -chdir="$TF_DIR" apply -input=false tfplan
+
+      - name: Wait for ECS services
+        run: |
+          cluster=$(terraform -chdir="$TF_DIR" output -raw ecs_cluster_name)
+          api_service=$(terraform -chdir="$TF_DIR" output -raw api_service_name)
+          worker_service=$(terraform -chdir="$TF_DIR" output -raw worker_service_name)
+          aws ecs wait services-stable --cluster "$cluster" --services "$api_service" "$worker_service"
+
+      - name: Verify health endpoint
+        run: |
+          alb_dns=$(terraform -chdir="$TF_DIR" output -raw alb_dns_name)
+          curl --fail --silent --show-error --retry 10 --retry-delay 15 --retry-all-errors "http://$alb_dns/healthz"
+
+      - name: Deployment summary
+        run: |
+          alb_dns=$(terraform -chdir="$TF_DIR" output -raw alb_dns_name)
+          {
+            echo "## AWS deployment"
+            echo
+            echo "- Image: \`$IMAGE_URI\`"
+            echo "- Dashboard: http://$alb_dns/"
+          } >> "$GITHUB_STEP_SUMMARY"

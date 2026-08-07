@@ -130,7 +130,7 @@ GITHUB_REPOSITORY=owner/aws-ecs-site-monitor \
 ./scripts/bootstrap-deployment.sh
 ```
 
-The script does not deploy the application. See the [deployment guide](docs/deployment.md) for prerequisites, security scope, and the remaining workflow steps.
+The script does not deploy the application. It adds the authenticated GitHub user as the `aws-dev` reviewer; after it completes, run the `Deploy` workflow manually from `main`. See the [deployment guide](docs/deployment.md) for the security scope and deployment sequence.
 
 Validate Terraform locally:
 
